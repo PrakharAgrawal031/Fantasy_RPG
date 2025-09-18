@@ -1,13 +1,13 @@
 # main.py
 import sys
 from game.character import Character
+from game.actions import explore, rest
 
 RACES = ["Human", "Dwarf", "Elf", "Orc"]
 CLASSES = ["Warrior", "Mage", "Rogue", "Cleric"]
 STATS = ["strength", "dexterity", "intelligence", "charisma", "endurance", "constitution"]
 
-def main():
-    
+def main_menu():
     while True:
         print("Welcome to Chat RPG!")
         print("1. New Game")
@@ -17,14 +17,15 @@ def main():
         choice = input("Enter your choice: ").strip()
 
         if choice == '1':
-            new_game()
+            return new_game()
         elif choice == '2':
-            load_game()
+            return load_game()
         elif choice == '3':
             print("Exiting game. Goodbye!")
             sys.exit(0)
         else:
             print("Invalid choice. Please try again.")
+    
 
 
 def new_game():
@@ -93,6 +94,7 @@ def new_game():
     #save character
     character.save()
     print("Character created and saved successfully!\n")
+    return character
 
 
 def load_game():
@@ -100,10 +102,43 @@ def load_game():
         character = Character.load()
         print("\nCharacter loaded successfully!")
         print(character)
+        return character
 
         #TODO: Add game loop here
     except FileNotFoundError:
         print("No saved game found. Please start a new game first.\n")
+
+
+
+
+#add basic game loop
+
+def game_loop(character):
+    
+    print(f"\nWelcome to the adventure, {character.name} the {character.race} {character.char_class}!\n")
+
+    while True:
+        print("\n--- Main menu ---")
+        print("1. Explore")
+        print("2. View character info")
+        print("3. Rest")
+        print("4. Save & Quit")
+
+        choice = input("Choose an action: ").strip()
+
+        if choice == "1":
+            explore(character)
+        elif choice == "2":
+            print('\n')
+            print(character)
+        elif choice == "3":
+            rest(character)
+        elif choice == "4":
+            character.save()
+            print("Progress saved. Goodbye Adventurer!")
+            break 
+        else:
+            print("Invalid choice. Try again.")
 
 
     # stats = {
@@ -116,4 +151,6 @@ def load_game():
     # }
 
 if __name__ == "__main__":
-    main()
+    character = main_menu()
+    if character:
+        game_loop(character)
