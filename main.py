@@ -2,6 +2,7 @@
 import sys
 from game.character import Character
 from game.actions import explore, rest
+from game.story import intro_story 
 
 RACES = ["Human", "Dwarf", "Elf", "Orc"]
 CLASSES = ["Warrior", "Mage", "Rogue", "Cleric"]
@@ -153,4 +154,5 @@ def game_loop(character):
 if __name__ == "__main__":
     character = main_menu()
     if character:
+        intro_story(character)
         game_loop(character)
