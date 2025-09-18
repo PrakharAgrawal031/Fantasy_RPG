@@ -1,4 +1,5 @@
 import json
+import os
 import random
 
 class Character:
@@ -42,6 +43,11 @@ class Character:
             stats["charisma"] = min(stats["charisma"] + 1, max_stat)
             stats["constitution"] = min(stats["constitution"] + 1, max_stat)
 
+        elif self.race.lower() == "orc":
+            stats["strength"] = min(stats["strength"] + 2, max_stat)
+            stats["endurance"] = min(stats["endurance"] + 1, max_stat)
+            stats["intelligence"] = max(stats["intelligence"] - 1, min_stat)
+
         
         #applying class modifiers
         if self.char_class.lower() == 'warrior':
@@ -51,12 +57,15 @@ class Character:
         
         elif self.char_class.lower() == 'mage':
             stats['intelligence'] = min(stats['intelligence']+3, max_stat)
-
-
         
         elif self.char_class.lower() == 'rogue':
             stats['dexterity'] = min(stats['dexterity']+2, max_stat)
             stats['charisma'] = min(stats['charisma']+1, max_stat)
+
+        elif self.char_class.lower() == 'cleric': 
+            stats['intelligence'] = min(stats['intelligence'] + 1, max_stat)
+            stats['charisma'] = min(stats['charisma'] + 1, max_stat)
+            stats['constitution'] = min(stats['constitution'] + 1, max_stat)
 
     def calculate_max_hp(self):
         return self.stats['constitution'] * 5 + self.stats['endurance'] * 2 + self.level * 3
@@ -99,6 +108,10 @@ class Character:
             print(f"{item} not found in inventory.")
 
     def save(self, filename='character.json'):
+
+        os.makedirs("saves", exist_ok=True)
+        filepath = os.path.join("saves", filename)
+
         data = {
             'name': self.name,
             'race': self.race,
@@ -110,13 +123,18 @@ class Character:
             'current_hp': self.current_hp
         }
 
-        with open(filename, 'w') as f:
+        with open(filepath, 'w') as f:
             json.dump(data, f, indent=4)
         print(f"Character saved.")
 
     
     @classmethod
     def load(cls, filename='character.json'):
+        filepath = os.path.join("saves", filename)
+
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"No save file found at {filepath}")
+        
         with open(filename, 'r') as f:
             data = json.load(f)
 
@@ -128,8 +146,10 @@ class Character:
             level=data['level'],
             inventory=data['inventory']
         )
+
         character.max_hp = data.get('max_hp', character.calculate_max_hp())
         character.current_hp = data.get('current_hp', character.max_hp)
+        
         return character
     
     def __str__(self):
