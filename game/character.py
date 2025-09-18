@@ -96,9 +96,11 @@ class Character:
                 print(f"{stat_choice} increased to {self.stats[stat_choice]}.")
                 break
 
+
     def add_item(self, item):
         self.inventory.append(item)
         print(f"{item} added to inventory.")
+
 
     def remove_item(self, item):
         if item in self.inventory:
@@ -106,6 +108,7 @@ class Character:
             print(f"{item} removed from inventory.")
         else:
             print(f"{item} not found in inventory.")
+
 
     def save(self, filename='character.json'):
 
@@ -135,7 +138,7 @@ class Character:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"No save file found at {filepath}")
         
-        with open(filename, 'r') as f:
+        with open(filepath, 'r') as f:
             data = json.load(f)
 
         character = cls(
@@ -149,7 +152,7 @@ class Character:
 
         character.max_hp = data.get('max_hp', character.calculate_max_hp())
         character.current_hp = data.get('current_hp', character.max_hp)
-        
+
         return character
     
     def __str__(self):
