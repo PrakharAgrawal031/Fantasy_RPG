@@ -1,0 +1,23 @@
+[
+    {
+        "name": "Goblin",
+        "stats": {"strength": 5, "dexterity": 6, "constitution": 4},
+        "hp": 12,
+        "xp_reward": 10,
+        "gold_reward": 5
+    },
+    {
+        "name": "Wolf",
+        "stats": {"strength": 6, "dexterity": 7, "constitution": 5},
+        "hp": 14,
+        "xp_reward": 12,
+        "gold_reward": 3
+    },
+    {
+        "name": "Bandit",
+        "stats": {"strength": 7, "dexterity": 6, "constitution": 6},
+        "hp": 16,
+        "xp_reward": 15,
+        "gold_reward": 8
+    }
+]

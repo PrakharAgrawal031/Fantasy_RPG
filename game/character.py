@@ -166,3 +166,23 @@ class Character:
             f"Inventory: {self.inventory}\n"
         )
 
+
+
+# creating enemies
+class Enemy:
+    def __init__(self, name, stat, hp, exp_reward, gold_reward):
+        self.name = name
+        self.stat = stat
+        self.hp = hp
+        self.exp_reward = exp_reward
+        self.gold_reward = gold_reward
+    
+    def is_alive(self):
+        return self.hp>0
+    
+    def attack(self):
+        return self.stat['strength'] + random.randint(1,4)
+    
+    def __str__(self):
+        return f"{self.name} (HP: {self.current_hp}/{self.max_hp})"
+
