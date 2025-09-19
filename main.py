@@ -123,7 +123,8 @@ def game_loop(character):
         print("1. Explore")
         print("2. View character info")
         print("3. Rest")
-        print("4. Save & Quit")
+        print("4. Inventory")
+        print("5. Save and Exit")
 
         choice = input("Choose an action: ").strip()
 
@@ -135,6 +136,8 @@ def game_loop(character):
         elif choice == "3":
             rest(character)
         elif choice == "4":
+            print("\nInventory: ", character.inventory)
+        elif choice == "5":
             character.save()
             print("Progress saved. Goodbye Adventurer!")
             break 
