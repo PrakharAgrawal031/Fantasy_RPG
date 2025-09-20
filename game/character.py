@@ -170,15 +170,16 @@ class Character:
 
 # creating enemies
 class Enemy:
-    def __init__(self, name, stat, hp, exp_reward, gold_reward):
+    def __init__(self, name, stat, hp, xp_reward, gold_reward):
         self.name = name
         self.stat = stat
-        self.hp = hp
-        self.exp_reward = exp_reward
+        self.max_hp = hp
+        self.xp_reward = xp_reward
         self.gold_reward = gold_reward
+        self.current_hp = hp
     
     def is_alive(self):
-        return self.hp>0
+        return self.current_hp>0
     
     def attack(self):
         return self.stat['strength'] + random.randint(1,4)
