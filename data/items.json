@@ -1,0 +1,74 @@
+[
+    {
+        "name": "Iron Sword",
+        "type": "weapon",
+        "slot": "right_hand",
+        "damage_modifier": 3,
+        "defense_modifier": 0,
+        "drop_rate": 0.3
+    },
+    {
+        "name": "Steel Dagger",
+        "type": "weapon",
+        "slot": "right_hand",
+        "damage_modifier": 2,
+        "defense_modifier": 0,
+        "drop_rate": 0.25
+    },
+    {
+        "name": "Wooden Shield",
+        "type": "armor",
+        "slot": "left_hand",
+        "damage_modifier": 0,
+        "defense_modifier": 3,
+        "drop_rate": 0.3
+    },
+    {
+        "name": "Leather Armor",
+        "type": "armor",
+        "slot": "body",
+        "damage_modifier": 0,
+        "defense_modifier": 2,
+        "drop_rate": 0.35
+    },
+    {
+        "name": "Magic Ring",
+        "type": "accessory",
+        "damage_modifier": 1,
+        "defense_modifier": 1,
+        "drop_rate": 0.15
+    },
+    {
+        "name": "Elven Cloak",
+        "type": "armor",
+        "slot": "body",
+        "damage_modifier": 0,
+        "defense_modifier": 2,
+        "drop_rate": 0.1
+    },
+    {
+        "name": "Silver Amulet",
+        "type": "accessory",
+        "damage_modifier": 0,
+        "defense_modifier": 1,
+        "drop_rate": 0.1
+    },
+    {
+        "name": "Health Potion",
+        "type": "consumable",
+        "heal": 10,
+        "drop_rate": 0.5
+    },
+    {
+        "name": "Mana Potion",
+        "type": "consumable",
+        "mana_restore": 10,
+        "drop_rate": 0.4
+    },
+    {
+        "name": "Gold",
+        "type": "currency",
+        "amount": 10,
+        "drop_rate": 0.8
+    }
+]

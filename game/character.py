@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import math
 
 class Character:
     def __init__(self, name, race, char_class, stats=None, level=1, inventory=None):
@@ -9,8 +10,20 @@ class Character:
         self.char_class = char_class
         self.level = level
         self.stats = stats if stats else self.generate_stats()
-        self.inventory = inventory if inventory else []
+        self.inventory = inventory if inventory else {"gold": 0}
+        self.equipment = {
+            "right_hand": None,
+            "left_hand": None,
+            "head": None,
+            "body": None,
+            "feet": None,
+            "accessory": None
+        }
 
+        self.damage_modifier = 0
+        self.defense_modifier = 0
+
+        self.xp = 0
         self.max_hp = self.calculate_max_hp()
         self.current_hp = self.max_hp
 
@@ -70,6 +83,17 @@ class Character:
     def calculate_max_hp(self):
         return self.stats['constitution'] * 5 + self.stats['endurance'] * 2 + self.level * 3
     
+    def next_exp_threshold(self):
+        base = 100
+        growth = 1.5
+        return math.floor(base * (self.level ** growth))
+    
+    def gain_exp(self, amount):
+        self.xp += amount
+        print(f" Gained {amount} xp! Total xp: {self.xp}")
+        while self.xp >= self.next_exp_threshold():
+            self.level_up()
+
     
     def level_up(self):
         self.level += 1
@@ -97,15 +121,29 @@ class Character:
                 break
 
 
-    def add_item(self, item):
-        self.inventory.append(item)
-        print(f"{item} added to inventory.")
+    # ---- Inventory Management ----
 
+    def gain_gold(self, amount):
+        if "gold" not in self.inventory:
+            self.inventory["gold"] = 0
+        else: 
+            self.inventory["gold"] += amount 
+        print({f"Gained {amount} gold! Total gold: {self.inventory["gold"]}"})
+        
 
-    def remove_item(self, item):
+    def add_item(self, item, qty=1):
         if item in self.inventory:
-            self.inventory.remove(item)
-            print(f"{item} removed from inventory.")
+            self.inventory[item] += qty
+        else: self.inventory[item] = qty
+        print(f"{item} X{qty} added to inventory.")
+
+
+    def remove_item(self, item, qty = 1):
+        if item in self.inventory and self.inventory[item] >= qty:
+            self.inventory[item] -= qty
+            if self.inventory[item] == 0:
+                del self.inventory[item]
+            print(f"{item} x{qty} removed from inventory.")
         else:
             print(f"{item} not found in inventory.")
 
@@ -120,10 +158,14 @@ class Character:
             'race': self.race,
             'char_class': self.char_class,
             'level': self.level,
+            'xp': self.xp,
+            'equipment': self.equipment,
             'stats': self.stats,
             'inventory': self.inventory,
             'max_hp': self.max_hp,
-            'current_hp': self.current_hp
+            'current_hp': self.current_hp,
+            'damage_modifier': self.damage_modifier,
+            'defense_modifier': self.defense_modifier
         }
 
         with open(filepath, 'w') as f:
@@ -150,10 +192,34 @@ class Character:
             inventory=data['inventory']
         )
 
+        character.equipment = data.get('equipment')
+        character.xp = data.get('xp', 0)
         character.max_hp = data.get('max_hp', character.calculate_max_hp())
         character.current_hp = data.get('current_hp', character.max_hp)
 
         return character
+    
+    def equip_item(self, item):
+        """Equip an item from inventory"""
+        if "slot" not in item:
+            print(f"{item['name']} cannot be equipped.")
+            return
+    
+        slot = item['slot']
+        prev_item = self.equipment.get(slot)
+
+        if prev_item:
+            self.damage_modifier -= prev_item.get("damage_modifier", 0)
+            self.defense_modifier -= prev_item.get("defense_modifier", 0)
+            self.inventory.append(prev_item["name"])
+            print(f"Unequipped {prev_item['name']} from {slot}.")
+
+        self.equipment[slot] = item
+        self.damage_modifier += item.get("damage_modifier", 0)
+        self.defense_modifier += item.get("defense_modifier", 0)
+        if item["name"] in self.inventory:
+            self.remove_item(item["name"])
+        print(f"Equipped {item['name']} in {slot}.")
     
     def __str__(self):
         return(
@@ -164,6 +230,7 @@ class Character:
             f"HP: {self.current_hp}\n"
             f"Stats: {self.stats}\n"
             f"Inventory: {self.inventory}\n"
+            f"Exp: {self.xp}/{self.next_exp_threshold()}\n"
         )
 
 
@@ -186,4 +253,4 @@ class Enemy:
     
     def __str__(self):
         return f"{self.name} (HP: {self.current_hp}/{self.max_hp})"
-
+    
