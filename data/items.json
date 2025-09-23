@@ -56,19 +56,19 @@
     {
         "name": "Health Potion",
         "type": "consumable",
-        "heal": 10,
+        "effects": { "heal": 10 },
         "drop_rate": 0.5
     },
     {
         "name": "Mana Potion",
         "type": "consumable",
-        "mana_restore": 10,
+        "effects": { "mana_restore": 10 },
         "drop_rate": 0.4
     },
     {
         "name": "Gold",
         "type": "currency",
-        "amount": 10,
+        "effects": { "gold": 10 },
         "drop_rate": 0.8
     }
 ]

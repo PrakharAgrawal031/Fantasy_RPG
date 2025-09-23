@@ -3,8 +3,28 @@ import os
 import random
 import math
 
+
+# character.py
+
+def apply_effects(character, effects):
+    """Apply effects from a consumable item dynamically."""
+    for effect, value in effects.items():
+        if effect == "heal":
+            healed = min(value, character.max_hp - character.current_hp)
+            character.current_hp += healed
+            print(f"You recover {healed} HP.")
+        elif effect == "mana_restore":
+            # Placeholder until mana system is implemented
+            print(f"You restore {value} Mana.")
+        elif effect == "gold":
+            character.gain_gold(value)
+            print(f"You gained {value} gold.")
+        else:
+            print(f"Effect '{effect}' is not implemented yet.")
+
+
 class Character:
-    def __init__(self, name, race, char_class, stats=None, level=1, inventory=None):
+    def __init__(self, name, race, char_class, stats=None, level=1, xp = 0, inventory=None):
         self.name = name
         self.race = race
         self.char_class = char_class
@@ -19,13 +39,10 @@ class Character:
             "feet": None,
             "accessory": None
         }
-
-        self.damage_modifier = 0
-        self.defense_modifier = 0
-
-        self.xp = 0
+        self.xp = xp
         self.max_hp = self.calculate_max_hp()
         self.current_hp = self.max_hp
+
 
     def generate_stats(self, total_point = 30, min_stat = 1, max_stat = 20):
         '''Generates character stats using a fix total point system.'''
@@ -79,6 +96,8 @@ class Character:
             stats['intelligence'] = min(stats['intelligence'] + 1, max_stat)
             stats['charisma'] = min(stats['charisma'] + 1, max_stat)
             stats['constitution'] = min(stats['constitution'] + 1, max_stat)
+        
+        return stats
 
     def calculate_max_hp(self):
         return self.stats['constitution'] * 5 + self.stats['endurance'] * 2 + self.level * 3
@@ -119,33 +138,203 @@ class Character:
                 self.stats[stat_choice] = min(self.stats[stat_choice] + 2, 20)
                 print(f"{stat_choice} increased to {self.stats[stat_choice]}.")
                 break
+        
+        old_max_hp = self.max_hp
+        self.max_hp = self.calculate_max_hp()
+        self.current_hp += (self.max_hp - old_max_hp)  # Increase current HP
 
 
     # ---- Inventory Management ----
 
+    @property
+    
+    def carry_capacity(self):
+        return 10 + (self.stats["strength"]*2) 
+    
+    @property
+    def current_weight(self):
+        with open("data/items.json") as f:
+            items = json.load(f)
+        total = 0
+        for item_name, qty in self.inventory.items():
+            if item_name.lower() == "gold":
+                continue  # gold has no weight
+            item_data = next((i for i in items if i["name"] == item_name), None)
+            if item_data:
+                total += item_data.get("weight", 1) * qty
+        return total
+    
+    def can_carry(self, item_name, qty=1):
+        with open("data/items.json") as f:
+            items = json.load(f)
+        item_data = next((i for i in items if i["name"] == item_name), None)
+        if not item_data:
+            return False
+        new_weight = self.current_weight + item_data.get("weight", 1) * qty
+        return new_weight <= self.carry_capacity
+
     def gain_gold(self, amount):
-        if "gold" not in self.inventory:
-            self.inventory["gold"] = 0
-        else: 
-            self.inventory["gold"] += amount 
-        print({f"Gained {amount} gold! Total gold: {self.inventory["gold"]}"})
+        self.inventory["gold"] = self.inventory.get("gold", 0) + amount
+        print(f"Gained {amount} gold! Total gold: {self.inventory['gold']}")
         
 
-    def add_item(self, item, qty=1):
-        if item in self.inventory:
-            self.inventory[item] += qty
-        else: self.inventory[item] = qty
-        print(f"{item} X{qty} added to inventory.")
+    def add_item(self, item_name, qty=1):
+
+        if not self.can_carry(item_name, qty):
+            print(f"⚠️ Cannot carry {item_name}, too heavy!")
+            return False
+
+        self.inventory[item_name] = self.inventory.get(item_name, 0) + qty
+        print(f"Added {qty}x {item_name} to inventory.")
+        return True
 
 
-    def remove_item(self, item, qty = 1):
-        if item in self.inventory and self.inventory[item] >= qty:
-            self.inventory[item] -= qty
-            if self.inventory[item] == 0:
-                del self.inventory[item]
-            print(f"{item} x{qty} removed from inventory.")
+    def remove_item(self, item_name, qty = 1):
+        if self.inventory.get(item_name, 0) >= qty:
+            self.inventory[item_name] -= qty
+            if self.inventory[item_name] == 0:
+                del self.inventory[item_name]
+            print(f"Removed {qty}x {item_name} from inventory.")
+            return True
+        print(f"⚠️ You don’t have enough {item_name}.")
+        return False
+
+    
+    # ----- Equipment System -----
+
+    def equip_item(self, item_name):
+        # Equip an item if possible
+        with open("data/items.json") as f:
+            items = json.load(f)
+        item_data = next((i for i in items if i["name"] == item_name), None)
+
+        if not item_data:
+            print(f"⚠️ Item {item_name} not found in items.json")
+            return False
+
+        if item_name not in self.inventory:
+            print(f"⚠️ You don’t have {item_name} in inventory.")
+            return False
+
+        slot = item_data.get("slot")
+        if not slot:
+            print(f"⚠️ {item_name} cannot be equipped.")
+            return False
+
+        # Unequip existing item in slot
+        if self.equipment.get(slot):
+            print(f"Unequipped {self.equipment[slot]}")
+            self.add_item(self.equipment[slot])
+
+        # Equip new item
+        self.equipment[slot] = item_name
+        self.remove_item(item_name, 1)
+        print(f"Equipped {item_name} in {slot}.")
+        return True
+
+
+
+        # """Equip an item from inventory"""
+        # if "slot" not in item:
+        #     print(f"{item['name']} cannot be equipped.")
+        #     return
+    
+        # slot = item['slot']
+        # prev_item = self.equipment.get(slot)
+
+        # if prev_item:
+        #     self.damage_modifier -= prev_item.get("damage_modifier", 0)
+        #     self.defense_modifier -= prev_item.get("defense_modifier", 0)
+        #     self.inventory.append(prev_item["name"])
+        #     print(f"Unequipped {prev_item['name']} from {slot}.")
+
+        # self.equipment[slot] = item
+        # self.damage_modifier += item.get("damage_modifier", 0)
+        # self.defense_modifier += item.get("defense_modifier", 0)
+        # if item["name"] in self.inventory:
+        #     self.remove_item(item["name"])
+        # print(f"Equipped {item['name']} in {slot}.")
+
+    def unequip_item(self, slot):
+        if slot not in self.equipment or not self.equipment[slot]:
+            print(f"No item equipped in {slot}.")
+            return False
+        
+        item_name = self.equipment[slot]
+        self.equipment[slot] = None
+        self.add_item(item_name)
+        print(f"Unequipped {item_name} from {slot}.")
+        return True
+    
+
+    def use_item(character, item_name):
+        with open("data/items.json") as f:
+            items = json.load(f)
+
+        consumables = {i["name"]: i for i in items if i["type"] == "consumable"}
+        available = {name: qty for name, qty in character.inventory.items() if name in consumables}
+
+        if not available:
+            print("\nYou have no consumable items.")
+            return
+
+        print("\nConsumables in your Inventory:")
+        for i, (item, qty) in enumerate(available.items(), 1):
+            print(f"{i}. {item} (x{qty})")
+
+        choice = input("Choose an item to use (number or name): ").strip()
+
+        # Allow both number and name input
+        if choice.isdigit():
+            index = int(choice) - 1
+            if index < 0 or index >= len(available):
+                print("Invalid choice.")
+                return
+            item_name = list(available.keys())[index]
         else:
-            print(f"{item} not found in inventory.")
+            item_name = choice.title()
+            if item_name not in available:
+                print("That consumable is not in your inventory.")
+                return
+
+        item_data = consumables[item_name]
+
+        print(f"\nYou used {item_name}.")
+        apply_effects(character, item_data.get("effects", {}))
+
+        character.remove_item(item_name, 1)
+    
+    # ----- Combat modifiers -----
+    @property
+    def damage_modifier(self):
+        """Sum of all equipped items' damage modifiers"""
+        with open("data/items.json") as f:
+            items = json.load(f)
+        dmg = 0
+        for slot, item_name in self.equipment.items():
+            if not item_name:
+                continue
+            item_data = next((i for i in items if i["name"] == item_name), None)
+            if item_data:
+                dmg += item_data.get("damage_modifier", 0)
+        return dmg
+
+    @property
+    def defense_modifier(self):
+        """Sum of all equipped items' defense modifiers"""
+        with open("data/items.json") as f:
+            items = json.load(f)
+        defense = 0
+        for slot, item_name in self.equipment.items():
+            if not item_name:
+                continue
+            item_data = next((i for i in items if i["name"] == item_name), None)
+            if item_data:
+                defense += item_data.get("defense_modifier", 0)
+        return defense
+    
+
+# ----- Save and Load game functions ----
 
 
     def save(self, filename='character.json'):
@@ -164,15 +353,12 @@ class Character:
             'inventory': self.inventory,
             'max_hp': self.max_hp,
             'current_hp': self.current_hp,
-            'damage_modifier': self.damage_modifier,
-            'defense_modifier': self.defense_modifier
         }
 
         with open(filepath, 'w') as f:
             json.dump(data, f, indent=4)
         print(f"Character saved.")
 
-    
     @classmethod
     def load(cls, filename='character.json'):
         filepath = os.path.join("saves", filename)
@@ -189,7 +375,8 @@ class Character:
             char_class=data['char_class'],
             stats=data['stats'],
             level=data['level'],
-            inventory=data['inventory']
+            inventory=data['inventory'],
+            xp = data['xp'],
         )
 
         character.equipment = data.get('equipment')
@@ -199,27 +386,6 @@ class Character:
 
         return character
     
-    def equip_item(self, item):
-        """Equip an item from inventory"""
-        if "slot" not in item:
-            print(f"{item['name']} cannot be equipped.")
-            return
-    
-        slot = item['slot']
-        prev_item = self.equipment.get(slot)
-
-        if prev_item:
-            self.damage_modifier -= prev_item.get("damage_modifier", 0)
-            self.defense_modifier -= prev_item.get("defense_modifier", 0)
-            self.inventory.append(prev_item["name"])
-            print(f"Unequipped {prev_item['name']} from {slot}.")
-
-        self.equipment[slot] = item
-        self.damage_modifier += item.get("damage_modifier", 0)
-        self.defense_modifier += item.get("defense_modifier", 0)
-        if item["name"] in self.inventory:
-            self.remove_item(item["name"])
-        print(f"Equipped {item['name']} in {slot}.")
     
     def __str__(self):
         return(

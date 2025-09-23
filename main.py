@@ -1,5 +1,6 @@
 # main.py
 import sys
+import json
 from game.character import Character
 from game.actions import explore, rest
 from game.story import intro_story 
@@ -110,6 +111,52 @@ def load_game():
         print("No saved game found. Please start a new game first.\n")
 
 
+# Iventory management
+
+def inventory_menu(character):
+    while True:
+        print("\n=== Inventory ===")
+        if not character.inventory:
+            print("Your inventory is empty.")
+            break
+
+        for i, (item_name, qty) in enumerate(character.inventory.items(), start=1):
+            print(f"{i}. {item_name} x{qty}")
+
+        print(f"{len(character.inventory)+1}. Back to main menu")
+
+        try:
+            choice = int(input("Select an item to use/equip or go back: "))
+            if choice == len(character.inventory)+1:
+                break
+
+            item_name = list(character.inventory.keys())[choice-1]
+
+            # Load item data from items.json
+            with open("data/items.json") as f:
+                items = json.load(f)
+            item_data = next((i for i in items if i["name"] == item_name), None)
+
+            if not item_data:
+                print("Item data not found.")
+                continue
+
+            # Check item type
+            if item_data["type"] == "consumable":
+                character.use_item(item_name)
+
+            elif item_data["type"] in ["weapon", "armor", "accessory"]:
+                action = input(f"Do you want to equip {item_name}? (y/n): ").strip().lower()
+                if action == "y":
+                    character.equip_item(item_name)
+                else:
+                    print(f"Skipped equipping {item_name}.")
+
+            else:
+                print(f"{item_name} cannot be used or equipped.")
+        except (ValueError, IndexError):
+            print("Invalid choice. Try again.")
+
 
 
 #add basic game loop
@@ -136,7 +183,7 @@ def game_loop(character):
         elif choice == "3":
             rest(character)
         elif choice == "4":
-            print("\nInventory: ", character.inventory)
+            inventory_menu(character)
         elif choice == "5":
             character.save()
             print("Progress saved. Goodbye Adventurer!")
