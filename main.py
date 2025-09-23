@@ -1,7 +1,208 @@
 # main.py
-def main():
-    print("Welcome to Fantasy RPG!")
-    print("Game starting...")
+import sys
+import json
+from game.character import Character
+from game.actions import explore, rest
+from game.story import intro_story 
+
+RACES = ["Human", "Dwarf", "Elf", "Orc"]
+CLASSES = ["Warrior", "Mage", "Rogue", "Cleric"]
+STATS = ["strength", "dexterity", "intelligence", "charisma", "endurance", "constitution"]
+
+def main_menu():
+    while True:
+        print("Welcome to Chat RPG!")
+        print("1. New Game")
+        print("2. Load Game")
+        print("3. Exit")
+
+        choice = input("Enter your choice: ").strip()
+
+        if choice == '1':
+            return new_game()
+        elif choice == '2':
+            return load_game()
+        elif choice == '3':
+            print("Exiting game. Goodbye!")
+            sys.exit(0)
+        else:
+            print("Invalid choice. Please try again.")
+    
+
+
+def new_game():
+    print("\nStarting a new game...")
+    print("\n==== Character Creation ====")
+    
+    #get name
+    name = input("Enter your character's name: ").strip()
+    
+    #get valid race
+    while True:
+        race = input(f"Choose your race ({','.join(RACES)}): ").strip().capitalize()
+
+        if race in RACES:
+            break
+        else:
+            print("Invalid choice. Please choose a valid option.")
+
+    #get valid class
+    while True:
+        char_class = input(f"Choose your class ({','.join(CLASSES)}): ").strip().capitalize()
+
+        if char_class in CLASSES:
+            break
+        else:
+            print("Invalid choice. Please choose a valid option.")
+
+    #Manual stat allocation
+
+    total_points = 30
+    min_stat = 3
+
+    stats = {stat: min_stat for stat in STATS}
+    remaining_points = total_points - min_stat * len(STATS)
+
+    print(f"\nYou have {total_points} points to distribute among the following stats: {', '.join(STATS)}")
+    print(f"Each stat must have at least {min_stat} points. You have {remaining_points} points remaining to allocate.")
+
+    for stat in STATS:
+        while remaining_points > 0:
+            try:
+                print(f"\nRemaining points: {remaining_points}")
+
+                val = int(input(f"Assign point to {stat} (current: {stats[stat]}): "))
+
+                if val < 0 or val > remaining_points:
+                    print(f"Invalid input. You can assign between 0 and {remaining_points} points.")
+                    continue
+
+                stats[stat] += val
+                remaining_points -= val
+                break
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+    
+    print("\nFinal stats: ", stats)
+
+    character = Character(name, race, char_class, stats=stats)
+
+    # #Generating stats randomly for now. Will modify later to allow user input
+    # character = Character(name, race, char_class)
+
+    print("\nCharacter created successfully!")
+    print(character)
+
+    #save character
+    character.save()
+    print("Character created and saved successfully!\n")
+    return character
+
+
+def load_game():
+    try:
+        character = Character.load()
+        print("\nCharacter loaded successfully!")
+        print(character)
+        return character
+
+        #TODO: Add game loop here
+    except FileNotFoundError:
+        print("No saved game found. Please start a new game first.\n")
+
+
+# Iventory management
+
+def inventory_menu(character):
+    while True:
+        print("\n=== Inventory ===")
+        if not character.inventory:
+            print("Your inventory is empty.")
+            break
+
+        for i, (item_name, qty) in enumerate(character.inventory.items(), start=1):
+            print(f"{i}. {item_name} x{qty}")
+
+        print(f"{len(character.inventory)+1}. Back to main menu")
+
+        try:
+            choice = int(input("Select an item to use/equip or go back: "))
+            if choice == len(character.inventory)+1:
+                break
+
+            item_name = list(character.inventory.keys())[choice-1]
+
+            # Load item data from items.json
+            with open("data/items.json") as f:
+                items = json.load(f)
+            item_data = next((i for i in items if i["name"] == item_name), None)
+
+            if not item_data:
+                print("Item data not found.")
+                continue
+
+            # Check item type
+            if item_data["type"] == "consumable":
+                character.use_item(item_name)
+
+            elif item_data["type"] in ["weapon", "armor", "accessory"]:
+                action = input(f"Do you want to equip {item_name}? (y/n): ").strip().lower()
+                if action == "y":
+                    character.equip_item(item_name)
+                else:
+                    print(f"Skipped equipping {item_name}.")
+
+            else:
+                print(f"{item_name} cannot be used or equipped.")
+        except (ValueError, IndexError):
+            print("Invalid choice. Try again.")
+
+
+
+#add basic game loop
+
+def game_loop(character):
+    
+    print(f"\nWelcome to the adventure, {character.name} the {character.race} {character.char_class}!\n")
+
+    while True:
+        print("\n--- Main menu ---")
+        print("1. Explore")
+        print("2. View character info")
+        print("3. Rest")
+        print("4. Inventory")
+        print("5. Save and Exit")
+
+        choice = input("Choose an action: ").strip()
+
+        if choice == "1":
+            explore(character)
+        elif choice == "2":
+            print('\n')
+            print(character)
+        elif choice == "3":
+            rest(character)
+        elif choice == "4":
+            inventory_menu(character)
+        elif choice == "5":
+            character.save()
+            print("Progress saved. Goodbye Adventurer!")
+            break 
+        else:
+            print("Invalid choice. Try again.")
+
+
+    # stats = {
+    #     'strength': 10,
+    #     'dexterity': 10,
+    #     'intelligence': 10,
+    #     'constitution': 10,
+    #     'charisma': 10,
+    #     'endurance': 10
+    # }
 
 if __name__ == "__main__":
-    main()
+    character = main_menu()
+    if character:
+        intro_story(character)
+        game_loop(character)
