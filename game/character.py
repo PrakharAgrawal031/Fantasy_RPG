@@ -208,30 +208,24 @@ class Character:
             items = json.load(f)
         item_data = next((i for i in items if i["name"] == item_name), None)
 
-        if not item_data:
-            print(f"⚠️ Item {item_name} not found in items.json")
-            return False
-
-        if item_name not in self.inventory:
-            print(f"⚠️ You don’t have {item_name} in inventory.")
-            return False
+        if not item_data or item_data["type"] not in ["weapon", "armor", "accessory"]:
+            print(f"⚠️ Item {item_name} cannot be equipped.")
+            return
 
         slot = item_data.get("slot")
-        if not slot:
-            print(f"⚠️ {item_name} cannot be equipped.")
-            return False
-
-        # Unequip existing item in slot
         if self.equipment.get(slot):
-            print(f"Unequipped {self.equipment[slot]}")
-            self.add_item(self.equipment[slot])
+            print(f"You already have {self.equipment[slot]} equipped in {slot}. Unequip it first.")
+            return
 
         # Equip new item
-        self.equipment[slot] = item_name
-        self.remove_item(item_name, 1)
-        print(f"Equipped {item_name} in {slot}.")
-        return True
-
+        if item_name in self.inventory and self.inventory[item_name] > 0:
+            self.equipment[slot] = item_name
+            self.inventory[item_name] -= 1
+            if self.inventory[item_name] <= 0:
+                del self.inventory[item_name]
+            print(f"You equipped {item_name} in {slot}.")
+        else:
+            print(f"You don’t have {item_name} to equip.")
 
 
         # """Equip an item from inventory"""
@@ -258,13 +252,12 @@ class Character:
     def unequip_item(self, slot):
         if slot not in self.equipment or not self.equipment[slot]:
             print(f"No item equipped in {slot}.")
-            return False
+            return
         
         item_name = self.equipment[slot]
         self.equipment[slot] = None
         self.add_item(item_name)
         print(f"Unequipped {item_name} from {slot}.")
-        return True
     
 
     def use_item(character, item_name):
@@ -393,9 +386,9 @@ class Character:
             f"Race: {self.race}\n"
             f"Class: {self.char_class}\n"
             f"Level: {self.level}\n"
-            f"HP: {self.current_hp}\n"
+            f"HP: {self.current_hp}/{self.max_hp}\n"
             f"Stats: {self.stats}\n"
-            f"Inventory: {self.inventory}\n"
+            #f"Inventory: {self.inventory}\n"
             f"Exp: {self.xp}/{self.next_exp_threshold()}\n"
         )
 

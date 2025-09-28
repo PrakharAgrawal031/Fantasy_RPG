@@ -40,5 +40,4 @@ def combat(player, enemy):
         player.gain_exp(enemy.xp_reward)
         player.gain_gold(enemy.gold_reward)
         print(f"You gain {enemy.xp_reward} XP and {enemy.gold_reward} gold.")
-        # TODO: add XP system later
         

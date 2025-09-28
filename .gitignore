@@ -4,4 +4,4 @@ __pycache__/
 *.pyd
 .env
 saves/*.json
-*flies.txt
+files.txt

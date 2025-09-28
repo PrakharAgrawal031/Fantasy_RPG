@@ -4,10 +4,8 @@ import json
 from game.character import Character
 from game.actions import explore, rest
 from game.story import intro_story 
-
-RACES = ["Human", "Dwarf", "Elf", "Orc"]
-CLASSES = ["Warrior", "Mage", "Rogue", "Cleric"]
-STATS = ["strength", "dexterity", "intelligence", "charisma", "endurance", "constitution"]
+from game.nlp_model import get_intent
+from game.inventory import inventory_menu
 
 def main_menu():
     while True:
@@ -111,53 +109,6 @@ def load_game():
         print("No saved game found. Please start a new game first.\n")
 
 
-# Iventory management
-
-def inventory_menu(character):
-    while True:
-        print("\n=== Inventory ===")
-        if not character.inventory:
-            print("Your inventory is empty.")
-            break
-
-        for i, (item_name, qty) in enumerate(character.inventory.items(), start=1):
-            print(f"{i}. {item_name} x{qty}")
-
-        print(f"{len(character.inventory)+1}. Back to main menu")
-
-        try:
-            choice = int(input("Select an item to use/equip or go back: "))
-            if choice == len(character.inventory)+1:
-                break
-
-            item_name = list(character.inventory.keys())[choice-1]
-
-            # Load item data from items.json
-            with open("data/items.json") as f:
-                items = json.load(f)
-            item_data = next((i for i in items if i["name"] == item_name), None)
-
-            if not item_data:
-                print("Item data not found.")
-                continue
-
-            # Check item type
-            if item_data["type"] == "consumable":
-                character.use_item(item_name)
-
-            elif item_data["type"] in ["weapon", "armor", "accessory"]:
-                action = input(f"Do you want to equip {item_name}? (y/n): ").strip().lower()
-                if action == "y":
-                    character.equip_item(item_name)
-                else:
-                    print(f"Skipped equipping {item_name}.")
-
-            else:
-                print(f"{item_name} cannot be used or equipped.")
-        except (ValueError, IndexError):
-            print("Invalid choice. Try again.")
-
-
 
 #add basic game loop
 
@@ -166,30 +117,34 @@ def game_loop(character):
     print(f"\nWelcome to the adventure, {character.name} the {character.race} {character.char_class}!\n")
 
     while True:
-        print("\n--- Main menu ---")
-        print("1. Explore")
-        print("2. View character info")
-        print("3. Rest")
-        print("4. Inventory")
-        print("5. Save and Exit")
+        print("\n--- What will you do? ---")
+        print("Type commands like: 'explore', 'character info', 'rest', 'use health potion', 'attack', 'inventory', 'equip item', 'save', 'exit'")
+        command = input("> ").strip()
+        intent = get_intent(command)
+        # choice = input("Choose an action: ").strip()
 
-        choice = input("Choose an action: ").strip()
-
-        if choice == "1":
+        if intent == "explore":
             explore(character)
-        elif choice == "2":
-            print('\n')
-            print(character)
-        elif choice == "3":
+        elif intent == "rest":
             rest(character)
-        elif choice == "4":
+        elif intent == "inventory":
             inventory_menu(character)
-        elif choice == "5":
+        elif intent == "information":
+            print(character)
+        elif intent == "use_item":
+            inventory_menu(character, only_consumables=True)
+        elif intent == "equip":
+            inventory_menu(character)
+        elif intent == "attack":
+            print("\nAttack option only works in combat.")
+        elif intent == "run":
+            print("\nRun option only works in combat.")
+        elif intent == "exit":
             character.save()
             print("Progress saved. Goodbye Adventurer!")
-            break 
+            break
         else:
-            print("Invalid choice. Try again.")
+            print("I didn't understand that action. Try something else.")
 
 
     # stats = {
